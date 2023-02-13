@@ -85,7 +85,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         val homeLatLng = LatLng(latitude, longitude)
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(homeLatLng, zoomLevel))
-        map.addMarker(MarkerOptions().position(homeLatLng))
+       // map.addMarker(MarkerOptions().position(homeLatLng))
         setPoiClick(map)
         setMapStyle(map)
         enableMyLocation()
