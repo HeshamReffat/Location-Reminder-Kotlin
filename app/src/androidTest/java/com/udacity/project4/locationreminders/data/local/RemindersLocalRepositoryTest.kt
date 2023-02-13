@@ -5,6 +5,9 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
+import com.udacity.project4.locationreminders.data.ReminderDataSource
+import com.udacity.project4.locationreminders.data.dto.ReminderDTO
+import com.udacity.project4.locationreminders.data.dto.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -21,8 +24,28 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 //Medium Test to test the repository
 @MediumTest
-class RemindersLocalRepositoryTest {
+class RemindersLocalRepositoryTest : LocalRepository {
+    private lateinit var repository: ReminderDataSource
 
+    init {
+
+    }
+
+    override suspend fun getReminders(): Result<List<ReminderDTO>> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun saveReminder(reminder: ReminderDTO) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getReminder(id: String): Result<ReminderDTO> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteAllReminders() {
+        TODO("Not yet implemented")
+    }
 //    TODO: Add testing implementation to the RemindersLocalRepository.kt
 
 }

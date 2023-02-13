@@ -21,8 +21,9 @@ import org.koin.android.ext.android.inject
  */
 class ReminderDescriptionActivity : AppCompatActivity() {
     val job = Job()
-    val scope = CoroutineScope(job)
+    val scope = CoroutineScope(Dispatchers.Main + job)
     val remindersLocalRepository: ReminderDataSource by inject()
+
     companion object {
         private const val EXTRA_ReminderDataItem = "EXTRA_ReminderDataItem"
 
@@ -47,7 +48,7 @@ class ReminderDescriptionActivity : AppCompatActivity() {
 //        TODO: Add the implementation of the reminder details
     }
 
-    fun getReminderDetails() :ReminderDataItem?{
+    fun getReminderDetails(): ReminderDataItem? {
         var reminderData: ReminderDataItem? = null
         val reminderIntentData =
             intent.getSerializableExtra(EXTRA_ReminderDataItem) as ReminderDataItem
