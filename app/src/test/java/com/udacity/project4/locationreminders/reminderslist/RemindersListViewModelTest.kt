@@ -44,7 +44,7 @@ class RemindersListViewModelTest {
     @Before
     fun setupViewModel() {
         fakeDataSource = FakeDataSource()
-       // fakeDataSource.reminders = localRemindersList.toMutableList()
+        fakeDataSource.reminders = localRemindersList.toMutableList()
         remindersListViewModel =
             RemindersListViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
     }
@@ -52,13 +52,13 @@ class RemindersListViewModelTest {
     @Test
     fun get_All_Reminders() = mainCoroutineRule.runBlockingTest {
 
-        fakeDataSource.setReturnError(true)
+        fakeDataSource.setReturnError(false)
         mainCoroutineRule.pauseDispatcher()
         remindersListViewModel.loadReminders()
         assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), IsEqual(true))
         mainCoroutineRule.resumeDispatcher()
         assertThat(remindersListViewModel.remindersList.getOrAwaitValue(), (not(nullValue())))
-        assertThat(remindersListViewModel.empty.getOrAwaitValue(), CoreMatchers.`is`(true))
+        assertThat(remindersListViewModel.empty.getOrAwaitValue(), CoreMatchers.`is`(false))
         assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), IsEqual(false))
         //assertThat(remindersListViewModel.showSnackBar.getOrAwaitValue(), (not(nullValue())))
     }

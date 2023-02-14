@@ -18,7 +18,7 @@ class RemindersListViewModel(
     // list that holds the reminder data to be displayed on the UI
     val remindersList = MutableLiveData<List<ReminderDataItem>>()
     val error: LiveData<Boolean> = remindersList.map { it is Error }
-    val empty: LiveData<Boolean> = remindersList.map { (it is Result.Success<*>)}
+    val empty: LiveData<Boolean> = remindersList.map { it is Result.Success<*>}
     /**
      * Get all the reminders from the DataSource and add them to the remindersList to be shown on the UI,
      * or show error if any
