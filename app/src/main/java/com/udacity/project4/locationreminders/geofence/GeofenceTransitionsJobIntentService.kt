@@ -19,7 +19,9 @@ import com.udacity.project4.utils.sendNotification
 import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
 import kotlin.coroutines.CoroutineContext
+
 private const val TAG = "GeofenceTransitions"
+
 class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
 
     private var coroutineJob: Job = Job()
@@ -27,6 +29,7 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
         get() = Dispatchers.IO + coroutineJob
     val ACTION_GEOFENCE_EVENT =
         "ACTION_GEOFENCE_EVENT"
+
     companion object {
         private const val JOB_ID = 573
 
@@ -51,25 +54,19 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
                 Log.e(TAG, errorMessage)
                 return
             }
-
-            if (geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
-                Log.v(TAG, applicationContext.getString(R.string.geofence_entered))
-                val fenceId = when {
-                    geofencingEvent.triggeringGeofences.isNotEmpty() ->
-                        geofencingEvent.triggeringGeofences[0].requestId
-                    else -> {
-                        Log.e(TAG, "No Geofence Trigger Found! Abort mission!")
-                        return
+            for (fence in geofencingEvent.triggeringGeofences) {
+                if (geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
+                    Log.v(TAG, applicationContext.getString(R.string.geofence_entered))
+                    val fenceId = when {
+                        geofencingEvent.triggeringGeofences.isNotEmpty() ->
+                            fence.requestId
+                        else -> {
+                            Log.e(TAG, "No Geofence Trigger Found! Abort mission!")
+                            return
+                        }
                     }
+                    sendNotification(fenceId)
                 }
-//                val foundIndex = GeofencingConstants.LANDMARK_DATA.indexOfFirst {
-//                    it.id == fenceId
-//                }
-//                if ( -1 == foundIndex ) {
-//                    Log.e(TAG, "Unknown Geofence: Abort Mission")
-//                    return
-               // }
-                sendNotification(fenceId)
             }
         }
         //TODO call @sendNotification
@@ -77,7 +74,7 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
 
     //TODO: get the request id of the current geofence
     //triggeringGeofences: List<Geofence>
-    private fun sendNotification(id:String) {
+    private fun sendNotification(id: String) {
         val requestId = id
         Log.e(TAG, "requestID = $requestId")
         //Get the local repository instance
@@ -102,6 +99,7 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
             }
         }
     }
+
     fun errorMessage(context: Context, errorCode: Int): String {
         val resources = context.resources
         return when (errorCode) {

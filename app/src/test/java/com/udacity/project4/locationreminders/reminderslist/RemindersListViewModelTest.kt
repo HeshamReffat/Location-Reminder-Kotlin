@@ -53,6 +53,7 @@ class RemindersListViewModelTest {
 
     @Test
     fun get_All_Reminders() = mainCoroutineRule.runBlockingTest {
+        fakeDataSource.setReturnError(false)
         remindersListViewModel.loadReminders()
         val value = remindersListViewModel.remindersList.getOrAwaitValue()
         assertThat(

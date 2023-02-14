@@ -97,13 +97,43 @@ class SaveReminderFragment : BaseFragment() {
     private fun checkPermissionsAndStartGeofencing(reminderItemData: ReminderDataItem) {
         // if (viewModel.geofenceIsActive()) return
         if (foregroundAndBackgroundLocationPermissionApproved()) {
-            addGeofenceForClue(reminderItemData)
+            checkDeviceLocationSettingsAndStartGeofence(reminderItemData = reminderItemData)
         } else {
             requestForegroundAndBackgroundLocationPermissions()
             addGeofenceForClue(reminderItemData)
         }
     }
-
+    private fun checkDeviceLocationSettingsAndStartGeofence(resolve:Boolean = true,reminderItemData: ReminderDataItem) {
+        val locationRequest = LocationRequest.create().apply {
+            priority = LocationRequest.PRIORITY_LOW_POWER
+        }
+        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+        val settingsClient = LocationServices.getSettingsClient(requireActivity())
+        val locationSettingsResponseTask =
+            settingsClient.checkLocationSettings(builder.build())
+        locationSettingsResponseTask.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException && resolve){
+                try {
+                    exception.startResolutionForResult(requireActivity(),
+                        REQUEST_TURN_DEVICE_LOCATION_ON)
+                } catch (sendEx: IntentSender.SendIntentException) {
+                    Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
+                }
+            } else {
+                Snackbar.make(
+                    this.view!!,
+                    R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+                ).setAction(android.R.string.ok) {
+                    checkDeviceLocationSettingsAndStartGeofence(reminderItemData = reminderItemData)
+                }.show()
+            }
+        }
+        locationSettingsResponseTask.addOnCompleteListener {
+            if ( it.isSuccessful ) {
+                addGeofenceForClue(reminderItemData)
+            }
+        }
+    }
     /*
      *  Determines whether the app has the appropriate permissions across Android 10+ and all other
      *  Android versions.

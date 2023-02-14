@@ -8,9 +8,11 @@ import androidx.test.filters.MediumTest
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
+import com.udacity.project4.locationreminders.data.dto.succeeded
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.MatcherAssert.assertThat
@@ -24,28 +26,53 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 //Medium Test to test the repository
 @MediumTest
-class RemindersLocalRepositoryTest : LocalRepository {
-    private lateinit var repository: ReminderDataSource
+class RemindersLocalRepositoryTest {
+    private lateinit var repository: RemindersLocalRepository
+    private lateinit var database: RemindersDatabase
 
-    init {
+    @get:Rule
+    var instantExecutorRule = InstantTaskExecutorRule()
 
+    //    TODO: Add testing implementation to the RemindersLocalRepository.kt
+    @Before
+    fun setup() {
+        // Using an in-memory database for testing, because it doesn't survive killing the process.
+        database = Room.inMemoryDatabaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            RemindersDatabase::class.java
+        )
+            .allowMainThreadQueries()
+            .build()
+
+        repository =
+            RemindersLocalRepository(
+                database.reminderDao(),
+                Dispatchers.Main
+            )
     }
 
-    override suspend fun getReminders(): Result<List<ReminderDTO>> {
-        TODO("Not yet implemented")
+    @After
+    fun cleanUp() {
+        database.close()
     }
 
-    override suspend fun saveReminder(reminder: ReminderDTO) {
-        TODO("Not yet implemented")
-    }
+    @Test
+    fun saveAndGetReminder() = runBlocking {
+        // GIVEN - A new task saved in the database.
+        val reminder1 = ReminderDTO("reminder1", "reminder111", "ee", 0.0, 0.0)
+        repository.saveReminder(reminder1)
 
-    override suspend fun getReminder(id: String): Result<ReminderDTO> {
-        TODO("Not yet implemented")
-    }
+        // WHEN  - Task retrieved by ID.
+        val result = repository.getReminder(reminder1.id)
 
-    override suspend fun deleteAllReminders() {
-        TODO("Not yet implemented")
+        // THEN - Same task is returned.
+        assertThat(result.succeeded, `is`(true))
+        result as Result.Success
+        assertThat(result.data.id, `is`(reminder1.id))
+        assertThat(result.data.title, `is`(reminder1.title))
+        assertThat(result.data.description, `is`(reminder1.description))
+        assertThat(result.data.location, `is`(reminder1.location))
+        assertThat(result.data.latitude, `is`(reminder1.latitude))
+        assertThat(result.data.longitude, `is`(reminder1.longitude))
     }
-//    TODO: Add testing implementation to the RemindersLocalRepository.kt
-
 }
