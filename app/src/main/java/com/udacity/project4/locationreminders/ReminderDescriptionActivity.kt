@@ -20,9 +20,6 @@ import org.koin.android.ext.android.inject
  * Activity that displays the reminder details after the user clicks on the notification
  */
 class ReminderDescriptionActivity : AppCompatActivity() {
-    val job = Job()
-    val scope = CoroutineScope(Dispatchers.Main + job)
-    val remindersLocalRepository: ReminderDataSource by inject()
 
     companion object {
         private const val EXTRA_ReminderDataItem = "EXTRA_ReminderDataItem"
@@ -42,31 +39,10 @@ class ReminderDescriptionActivity : AppCompatActivity() {
             this,
             R.layout.activity_reminder_description
         )
-        val desc = getReminderDetails()?.description
-        Log.e("ReminderDescription", "${getReminderDetails()?.description}")
-        binding.reminderDetailsText.text = desc
-//        TODO: Add the implementation of the reminder details
-    }
-
-    fun getReminderDetails(): ReminderDataItem? {
-        var reminderData: ReminderDataItem? = null
         val reminderIntentData =
             intent.getSerializableExtra(EXTRA_ReminderDataItem) as ReminderDataItem
-        Log.e("ReminderDescription", reminderIntentData.id)
-        scope.launch {
-            val result = remindersLocalRepository.getReminder(reminderIntentData.id)
-            if (result is Result.Success<ReminderDTO>) {
-                val reminderDTO = result.data
-                reminderData = ReminderDataItem(
-                    reminderDTO.title,
-                    reminderDTO.description,
-                    reminderDTO.location,
-                    reminderDTO.latitude,
-                    reminderDTO.longitude,
-                    reminderDTO.id
-                )
-            }
-        }
-        return reminderData
+        Log.e("ReminderDescription", "${reminderIntentData.description}")
+        binding.reminderDetailsText.text = reminderIntentData.description
+//        TODO: Add the implementation of the reminder details
     }
 }

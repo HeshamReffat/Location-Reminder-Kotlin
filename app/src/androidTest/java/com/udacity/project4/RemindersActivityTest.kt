@@ -104,7 +104,7 @@ class RemindersActivityTest :
         val reminder1 = ReminderDTO("reminder1", "reminder111", "ee", 0.0, 0.0)
         repository.saveReminder(reminder1)
 
-        // start the task
+        // start
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
         dataBindingIdlingResource.monitorActivity(activityScenario)
 
@@ -123,9 +123,9 @@ class RemindersActivityTest :
        // onView(withId(R.id.reminderDescription)).perform(replaceText("NEW DESCRIPTION"))
         onView(withId(R.id.saveReminder)).perform(click())
 
-        // Verify task is displayed on screen in the task list.
+        // Verify task is displayed on screen in the reminder list.
         onView(withText("NEW REMINDER")).check(matches(isDisplayed()))
-        // Verify previous task is not displayed.
+        // Verify previous reminder is not displayed.
         onView(withText("reminder1")).check(doesNotExist())
 
         //Close scenario

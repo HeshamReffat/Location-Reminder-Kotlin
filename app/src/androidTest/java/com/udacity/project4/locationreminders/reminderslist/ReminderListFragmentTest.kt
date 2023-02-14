@@ -77,9 +77,10 @@ class ReminderListFragmentTest {
     }
     @Test
     fun checkUiAndNavigate(){
+        //Given launch Fragment
         val scenario = launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
-
       //  onView(withText("reminder1")).check(matches(isDisplayed()))
+        //When
         onView(withId(R.id.noDataTextView)).check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
         val navController = mock(NavController::class.java)
         scenario.onFragment {
