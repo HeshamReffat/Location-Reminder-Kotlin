@@ -19,11 +19,8 @@ import kotlinx.coroutines.test.setMain
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.core.IsEqual
-import org.junit.After
+import org.junit.*
 import org.junit.Assert.assertThat
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
@@ -53,12 +50,14 @@ class RemindersListViewModelTest {
 
     @Test
     fun get_All_Reminders() = mainCoroutineRule.runBlockingTest {
+
         fakeDataSource.setReturnError(false)
+        mainCoroutineRule.pauseDispatcher()
         remindersListViewModel.loadReminders()
-        val value = remindersListViewModel.remindersList.getOrAwaitValue()
-        assertThat(
-            value, (not(nullValue()))
-        )
-        // assertThat(reminders.data, IsEqual(localRemindersList))
+        assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), IsEqual(true))
+        mainCoroutineRule.resumeDispatcher()
+        assertThat(remindersListViewModel.remindersList.getOrAwaitValue(), (not(nullValue())))
+        assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), IsEqual(false))
+        //assertThat(remindersListViewModel.showSnackBar.getOrAwaitValue(), (not(nullValue())))
     }
 }

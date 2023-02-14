@@ -64,8 +64,9 @@ class SaveReminderFragment : BaseFragment() {
         binding.lifecycleOwner = this
         binding.selectLocation.setOnClickListener {
             //            Navigate to another fragment to get the user location
-            _viewModel.navigationCommand.value =
-                NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
+            checkDeviceLocationSettingsAndStartGeofence()
+//            _viewModel.navigationCommand.value =
+//                NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
         }
 
         binding.saveReminder.setOnClickListener {
@@ -97,13 +98,14 @@ class SaveReminderFragment : BaseFragment() {
     private fun checkPermissionsAndStartGeofencing(reminderItemData: ReminderDataItem) {
         // if (viewModel.geofenceIsActive()) return
         if (foregroundAndBackgroundLocationPermissionApproved()) {
-            checkDeviceLocationSettingsAndStartGeofence(reminderItemData = reminderItemData)
+            addGeofenceForClue(reminderItemData)
         } else {
             requestForegroundAndBackgroundLocationPermissions()
             addGeofenceForClue(reminderItemData)
         }
     }
-    private fun checkDeviceLocationSettingsAndStartGeofence(resolve:Boolean = true,reminderItemData: ReminderDataItem) {
+
+    private fun checkDeviceLocationSettingsAndStartGeofence(resolve: Boolean = true) {
         val locationRequest = LocationRequest.create().apply {
             priority = LocationRequest.PRIORITY_LOW_POWER
         }
@@ -112,10 +114,12 @@ class SaveReminderFragment : BaseFragment() {
         val locationSettingsResponseTask =
             settingsClient.checkLocationSettings(builder.build())
         locationSettingsResponseTask.addOnFailureListener { exception ->
-            if (exception is ResolvableApiException && resolve){
+            if (exception is ResolvableApiException && resolve) {
                 try {
-                    exception.startResolutionForResult(requireActivity(),
-                        REQUEST_TURN_DEVICE_LOCATION_ON)
+                    exception.startResolutionForResult(
+                        requireActivity(),
+                        REQUEST_TURN_DEVICE_LOCATION_ON
+                    )
                 } catch (sendEx: IntentSender.SendIntentException) {
                     Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
                 }
@@ -124,16 +128,19 @@ class SaveReminderFragment : BaseFragment() {
                     this.view!!,
                     R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
                 ).setAction(android.R.string.ok) {
-                    checkDeviceLocationSettingsAndStartGeofence(reminderItemData = reminderItemData)
+                    checkDeviceLocationSettingsAndStartGeofence()
                 }.show()
             }
         }
         locationSettingsResponseTask.addOnCompleteListener {
-            if ( it.isSuccessful ) {
-                addGeofenceForClue(reminderItemData)
+            if (it.isSuccessful) {
+                _viewModel.navigationCommand.value =
+                    NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
+                Log.d(TAG, "Location Enabled ")
             }
         }
     }
+
     /*
      *  Determines whether the app has the appropriate permissions across Android 10+ and all other
      *  Android versions.
