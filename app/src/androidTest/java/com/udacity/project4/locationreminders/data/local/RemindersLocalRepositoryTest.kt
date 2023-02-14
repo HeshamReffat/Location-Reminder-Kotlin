@@ -58,14 +58,14 @@ class RemindersLocalRepositoryTest {
 
     @Test
     fun saveAndGetReminder() = runBlocking {
-        // GIVEN - A new task saved in the database.
+        // GIVEN - A new reminder saved in the database.
         val reminder1 = ReminderDTO("reminder1", "reminder111", "ee", 0.0, 0.0)
         repository.saveReminder(reminder1)
 
-        // WHEN  - Task retrieved by ID.
+        // WHEN  - reminder retrieved by ID.
         val result = repository.getReminder(reminder1.id)
 
-        // THEN - Same task is returned.
+        // THEN - Same reminder is returned.
         assertThat(result.succeeded, `is`(true))
         result as Result.Success
         assertThat(result.data.id, `is`(reminder1.id))
