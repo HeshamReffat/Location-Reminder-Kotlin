@@ -54,7 +54,7 @@ class ReminderListFragmentTest: AutoCloseKoinTest() {
      * at this step we will initialize Koin related code to be able to use it in out testing.
      */
     @Before
-    fun start() {
+    fun setup() {
         stopKoin()//stop the original app koin
         appContext = getApplicationContext()
         val myModule = module {
@@ -88,7 +88,7 @@ class ReminderListFragmentTest: AutoCloseKoinTest() {
 
 
     @Test
-    fun navigateToSaveReminderFragment () {
+    fun checkUiNavigation () {
 
         val scenario = launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
         val navController = mock(NavController::class.java)
@@ -104,7 +104,7 @@ class ReminderListFragmentTest: AutoCloseKoinTest() {
     }
 
     @Test
-    fun checkReminderAppearInRecylce() = runBlocking {
+    fun checkReminderAppearInRecycle() = runBlocking<Unit> {
 
         val reminder1 = ReminderDTO("reminder1", "reminder111", "ee", 0.0, 0.0)
 
@@ -122,7 +122,7 @@ class ReminderListFragmentTest: AutoCloseKoinTest() {
 
 
     @Test
-    fun checkEmptyRecycleShowNoData() = runBlocking {
+    fun checkEmptyRecycleShowNoData() = runBlocking<Unit> {
         val reminder1 = ReminderDTO("reminder1", "reminder111", "ee", 0.0, 0.0)
 
         repository.saveReminder(reminder1)

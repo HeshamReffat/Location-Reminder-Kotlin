@@ -123,8 +123,10 @@ class RemindersActivityTest :
         onView(withId(R.id.reminderDescription)).perform(replaceText("NEW DESCRIPTION"))
         onView(withId(R.id.selectLocation)).perform(click())
         onView(withId(R.id.confirmButton)).perform(click())
-       // onView(withId(R.id.reminderDescription)).perform(replaceText("NEW DESCRIPTION"))
+        // onView(withId(R.id.reminderDescription)).perform(replaceText("NEW DESCRIPTION"))
         onView(withId(R.id.saveReminder)).perform(click())
+        onView(withText(R.string.reminder_saved)).inRoot(withDecorView(not(`is`(getActivity(activityScenario).window.decorView))))
+            .check(matches(isDisplayed()))
         // Verify task is displayed on screen in the reminder list.
         onView(withText("NEW REMINDER")).check(matches(isDisplayed()))
         // Verify previous reminder is not displayed.
@@ -164,6 +166,13 @@ class RemindersActivityTest :
 
         activityScenario.close()
     }
-//    TODO: add End to End testing to the app
 
+    //    TODO: add End to End testing to the app
+    private fun getActivity(activityScenario: ActivityScenario<RemindersActivity>): Activity {
+        lateinit var activity: Activity
+        activityScenario.onActivity {
+            activity = it
+        }
+        return activity
+    }
 }
