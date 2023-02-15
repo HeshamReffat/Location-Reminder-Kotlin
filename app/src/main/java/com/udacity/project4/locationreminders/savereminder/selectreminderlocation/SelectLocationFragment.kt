@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.content.res.Resources
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -32,6 +33,7 @@ import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
+import java.util.*
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
@@ -39,9 +41,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
-    private var POI: PointOfInterest? = null
+    private var marker: Marker? = null
     private val TAG = SelectLocationFragment::class.java.simpleName
     private val REQUEST_LOCATION_PERMISSION = 1
+
+    private val myCurrentLocation by lazy {
+        LocationServices.getFusedLocationProviderClient(requireActivity())
+    }
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
@@ -56,7 +62,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
         binding.confirmButton.setOnClickListener {
             onLocationSelected()
-            NavHostFragment.findNavController(this@SelectLocationFragment).navigateUp();
+            _viewModel.navigationCommand.value = NavigationCommand.Back
         }
 //        TODO: add the map setup implementation
 //        TODO: zoom to the user location after taking his permission
@@ -88,29 +94,27 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         map = googleMap
 
         //These coordinates represent the latitude and longitude of the Googleplex.
-        val latitude = 37.422160
-        val longitude = -122.084270
-        val zoomLevel = 15f
-
-        val homeLatLng = LatLng(latitude, longitude)
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(homeLatLng, zoomLevel))
-        // map.addMarker(MarkerOptions().position(homeLatLng))
+//        val latitude = 37.422160
+//        val longitude = -122.084270
+//        val zoomLevel = 15f
+//
+//        val homeLatLng = LatLng(latitude, longitude)
+//        map.moveCamera(CameraUpdateFactory.newLatLngZoom(homeLatLng, zoomLevel))
         setPoiClick(map)
         setMapStyle(map)
-        enableMyLocation()
+        setMapLongClick(map)
+        if (isPermissionGranted()) {
+            enableMyLocation()
+        } else {
+            requestLocationPermission()
+        }
     }
 
     private fun onLocationSelected() {
-        if (POI != null) {
-            _viewModel.selectedPOI.value = POI
-            _viewModel.latitude.value = POI?.latLng?.latitude
-            _viewModel.longitude.value = POI?.latLng?.longitude
-            _viewModel.reminderSelectedLocationStr.value = POI?.name
-
-        } else {
-            _viewModel.latitude.value = map.myLocation.latitude
-            _viewModel.longitude.value = map.myLocation.longitude
-            _viewModel.reminderSelectedLocationStr.value = "CurrentLocation"
+        marker?.let {marker ->
+            _viewModel.latitude.value = marker.position.latitude
+            _viewModel.longitude.value = marker.position.longitude
+            _viewModel.reminderSelectedLocationStr.value = marker.title
         }
         //        TODO: When the user confirms on the selected location,
         //         send back the selected location details to the view model
@@ -145,17 +149,39 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun setPoiClick(map: GoogleMap) {
         map.setOnPoiClickListener { poi ->
-            POI = poi
-            onLocationSelected()
-            val poiMarker = map.addMarker(
-                MarkerOptions()
-                    .position(poi.latLng)
-                    .title(poi.name)
+            map.clear()
+            marker = map.addMarker(MarkerOptions()
+                .position(poi.latLng)
+                .title(poi.name)
             )
-            poiMarker?.showInfoWindow()
+            marker?.showInfoWindow()
+
+
+            map.animateCamera(CameraUpdateFactory.newLatLng(poi.latLng))
         }
     }
+    private fun setMapLongClick(map: GoogleMap) {
+        map.setOnMapLongClickListener { latLng ->
+            // A Snippet is Additional text that's displayed below the title.
 
+            val snippet = String.format(
+                Locale.getDefault(),
+                "Lat: %1$.5f, Long: %2$.5f",
+                latLng.latitude,
+                latLng.longitude
+            )
+            map.clear()
+            marker = map.addMarker(
+                MarkerOptions()
+                    .position(latLng)
+                    .title(getString(R.string.dropped_pin))
+                    .snippet(snippet)
+            )
+
+            marker?.showInfoWindow()
+            map.animateCamera(CameraUpdateFactory.newLatLng(latLng))
+        }
+    }
     private fun setMapStyle(map: GoogleMap) {
         try {
             // Customize the styling of the base map using a JSON object defined
@@ -175,23 +201,42 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
-    private fun isPermissionGranted(): Boolean {
+    private fun isPermissionGranted() : Boolean {
         return ContextCompat.checkSelfPermission(
-            this.context!!,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) === PackageManager.PERMISSION_GRANTED
+            requireActivity(),
+            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
+    private fun requestLocationPermission() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED) {
+            map.isMyLocationEnabled = true
 
-    @SuppressLint("MissingPermission")
-    private fun enableMyLocation() {
-        if (isPermissionGranted()) {
-            map.setMyLocationEnabled(true)
-        } else {
-            ActivityCompat.requestPermissions(
-                this.requireActivity(),
+        }
+
+        else {
+            this.requestPermissions(
                 arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
                 REQUEST_LOCATION_PERMISSION
             )
         }
+    }
+    @SuppressLint("MissingPermission")
+    private fun enableMyLocation() {
+        map.isMyLocationEnabled = true
+        Log.d("MapsActivity", "getLastLocation Called")
+        myCurrentLocation.lastLocation
+            .addOnSuccessListener { location : Location? ->
+                location?.let {
+                    val myLocation = LatLng(location.latitude, location.longitude)
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(myLocation, 15f))
+                    marker=  map.addMarker(
+                        MarkerOptions().position(myLocation)
+                            .title("My Location")
+                    )
+                    marker?.showInfoWindow()
+                }
+            }
     }
 }

@@ -12,3 +12,5 @@ sealed class Result<out T : Any> {
 }
 val Result<*>.succeeded
     get() = this is Result.Success && data != null
+val Result<*>.error
+    get() = this is Result.Error && message != null

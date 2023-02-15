@@ -23,6 +23,7 @@ import org.hamcrest.core.IsEqual
 import org.junit.*
 import org.junit.Assert.assertThat
 import org.junit.runner.RunWith
+import org.koin.core.context.stopKoin
 
 @RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
@@ -43,23 +44,42 @@ class RemindersListViewModelTest {
 
     @Before
     fun setupViewModel() {
-        fakeDataSource = FakeDataSource()
-        fakeDataSource.reminders = localRemindersList.toMutableList()
+        fakeDataSource = FakeDataSource(localRemindersList.toMutableList())
         remindersListViewModel =
             RemindersListViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
     }
+    @After
+    fun closeKoin() {
+        stopKoin()
+    }
+    @Test
+    fun getRemindersAndShowLoading() {
+        mainCoroutineRule.pauseDispatcher()
 
+        remindersListViewModel.loadReminders()
+
+        assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), IsEqual(true))
+
+        mainCoroutineRule.resumeDispatcher()
+
+        assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), IsEqual(false))
+
+    }
+    @Test
+    fun remainderListNotEmpty() = mainCoroutineRule.runBlockingTest  {
+        val reminder1 = ReminderDTO("reminder1", "reminder111", "ee", 0.0, 0.0)
+
+        fakeDataSource.saveReminder(reminder1)
+        remindersListViewModel.loadReminders()
+
+        assertThat(remindersListViewModel.remindersList.getOrAwaitValue(),(not(emptyList())))
+    }
     @Test
     fun get_All_Reminders() = mainCoroutineRule.runBlockingTest {
-
-        fakeDataSource.setReturnError(false)
         mainCoroutineRule.pauseDispatcher()
+        fakeDataSource.setReturnError(true)
         remindersListViewModel.loadReminders()
-        assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), IsEqual(true))
         mainCoroutineRule.resumeDispatcher()
-        assertThat(remindersListViewModel.remindersList.getOrAwaitValue(), (not(nullValue())))
-        assertThat(remindersListViewModel.empty.getOrAwaitValue(), CoreMatchers.`is`(false))
-        assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), IsEqual(false))
-        //assertThat(remindersListViewModel.showSnackBar.getOrAwaitValue(), (not(nullValue())))
+        assertThat(remindersListViewModel.showSnackBar.getOrAwaitValue(),IsEqual("Error reminders test"))
     }
 }

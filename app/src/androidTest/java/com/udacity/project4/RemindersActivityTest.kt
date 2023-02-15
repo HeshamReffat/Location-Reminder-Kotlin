@@ -1,5 +1,6 @@
 package com.udacity.project4
 
+import android.app.Activity
 import android.app.Application
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
@@ -9,6 +10,7 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.withDecorView
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
@@ -26,6 +28,7 @@ import com.udacity.project4.util.monitorActivity
 import com.udacity.project4.utils.EspressoIdlingResource
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers
+import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert
 import org.junit.After
@@ -122,7 +125,6 @@ class RemindersActivityTest :
         onView(withId(R.id.confirmButton)).perform(click())
        // onView(withId(R.id.reminderDescription)).perform(replaceText("NEW DESCRIPTION"))
         onView(withId(R.id.saveReminder)).perform(click())
-
         // Verify task is displayed on screen in the reminder list.
         onView(withText("NEW REMINDER")).check(matches(isDisplayed()))
         // Verify previous reminder is not displayed.
@@ -130,6 +132,44 @@ class RemindersActivityTest :
 
         //Close scenario
         activityScenario.close()
+    }
+
+    @Test
+    fun reminderFabCLickAndCheckTitleError() {
+
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        val snackBarMessage = appContext.getString(R.string.err_enter_title)
+        onView(withText(snackBarMessage)).check(matches(isDisplayed()))
+
+        activityScenario.close()
+    }
+
+    @Test
+    fun reminderFabCLickAndTestSnackBarLocationError() {
+
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.reminderTitle)).perform(replaceText("NEW REMINDER"))
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        val snackBarMessage = appContext.getString(R.string.err_select_location)
+        onView(withText(snackBarMessage)).check(matches(isDisplayed()))
+
+        activityScenario.close()
+    }
+    private fun activityView(activityScenario: ActivityScenario<RemindersActivity>): Activity {
+        lateinit var activity: Activity
+        activityScenario.onActivity {
+            activity = it
+        }
+        return activity
     }
 //    TODO: add End to End testing to the app
 
