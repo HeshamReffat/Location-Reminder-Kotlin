@@ -164,13 +164,6 @@ class RemindersActivityTest :
 
         activityScenario.close()
     }
-    private fun activityView(activityScenario: ActivityScenario<RemindersActivity>): Activity {
-        lateinit var activity: Activity
-        activityScenario.onActivity {
-            activity = it
-        }
-        return activity
-    }
 //    TODO: add End to End testing to the app
 
 }

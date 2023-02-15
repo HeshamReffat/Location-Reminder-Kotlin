@@ -53,7 +53,7 @@ class RemindersListViewModelTest {
         stopKoin()
     }
     @Test
-    fun getRemindersAndShowLoading() {
+    fun getRemindersAndShowLoading() =mainCoroutineRule.runBlockingTest{
         mainCoroutineRule.pauseDispatcher()
 
         remindersListViewModel.loadReminders()
